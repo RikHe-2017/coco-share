@@ -1,0 +1,24 @@
+{
+  "name": "@coco-share/workspace",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "pnpm -r run build",
+    "clean": "pnpm -r exec rm -rf dist",
+    "publish:green": "pnpm --filter @coco-share/coco-green publish --access public --no-git-checks",
+    "publish:blue": "pnpm --filter @coco-share/coco-blue publish --access public --no-git-checks",
+    "publish:all": "pnpm run build && pnpm publish:green && pnpm publish:blue"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.5",
+    "eslint": "^9.21.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
+  }
+}

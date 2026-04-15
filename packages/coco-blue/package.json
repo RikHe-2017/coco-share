@@ -1,0 +1,28 @@
+{
+  "name": "@coco-share/coco-blue",
+  "author": "Rik He",
+  "version": "0.0.0",
+  "description": "Install Agent Skills from coco-green (coco-blue client).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "coco-blue": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/prompts": "^2.4.9",
+    "typescript": "^5.7.3"
+  }
+}
