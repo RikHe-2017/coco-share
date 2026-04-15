@@ -16,9 +16,11 @@ import {
 } from "./agents.js";
 import { extractZipBufferToDir } from "./extract-zip.js";
 import { pathExists } from "./fs-utils.js";
+import { blueCli } from "./cli-config.js";
+import { normalizeCliStringList } from "./cli-string-list.js";
 import { normalizeBaseUrl } from "./normalize-base-url.js";
+import { readPackageVersion } from "./pkg-version.js";
 import { PROMPTS_MULTISELECT_INSTRUCTIONS } from "./prompt-locale.js";
-import { parseBlueArgs } from "./parse-args.js";
 import {
   CONFLICT_ACTION_PROMPT_CHOICES,
   ConflictActionId,
@@ -70,6 +72,53 @@ function asInstallScope(value: unknown): InstallScope {
     return value;
   }
   throw new Error("提示返回值不符合预期。");
+}
+
+type PresetSkills =
+  | { readonly kind: "interactive" }
+  | { readonly kind: "preset"; readonly names: string[] }
+  | { readonly kind: "error"; readonly message: string };
+
+function resolvePresetSkills(raw: readonly string[]): PresetSkills {
+  if (raw.length === 0) {
+    return { kind: "interactive" };
+  }
+
+  const n = normalizeCliStringList(raw);
+  if (n.hadBlankToken || n.values.length === 0) {
+    return { kind: "error", message: "--skill 的值不能为空。" };
+  }
+
+  return { kind: "preset", names: n.values };
+}
+
+type PresetAgents =
+  | { readonly kind: "interactive" }
+  | { readonly kind: "preset"; readonly agents: AgentId[] }
+  | { readonly kind: "error"; readonly message: string };
+
+function resolvePresetAgents(raw: readonly string[]): PresetAgents {
+  if (raw.length === 0) {
+    return { kind: "interactive" };
+  }
+
+  const n = normalizeCliStringList(raw);
+  if (n.hadBlankToken || n.values.length === 0) {
+    return { kind: "error", message: "--agent 的值不能为空。" };
+  }
+
+  const agents: AgentId[] = [];
+  for (const id of n.values) {
+    if (!isAgentId(id)) {
+      return {
+        kind: "error",
+        message: `未知的 Agent：${id}（可选：${AGENT_IDS.join(", ")}）`,
+      };
+    }
+    agents.push(id);
+  }
+
+  return { kind: "preset", agents };
 }
 
 function printWelcome(): void {
@@ -297,13 +346,54 @@ async function copySkillTree(
 }
 
 async function main(): Promise<void> {
+  const pkgVersion = readPackageVersion(import.meta.url);
+  const parsed = blueCli.parse(process.argv.slice(2));
+  if (!parsed.ok) {
+    console.error(parsed.message);
+    process.exitCode = 1;
+    return;
+  }
+
+  const cli = parsed.values;
+  if (cli.help) {
+    console.log(
+      blueCli.formatHelp({
+        name: "coco-blue",
+        version: pkgVersion,
+        description: "从 coco-green 服务器下载并在本地安装 Agent Skills。",
+        usage: "coco-blue [选项]",
+        notes: [
+          "若你收到来自 coco-green 主动模式生成的命令，推荐在 PowerShell / Windows Terminal 中粘贴执行。",
+        ],
+      }),
+    );
+    return;
+  }
+
+  if (cli.version) {
+    console.log(pkgVersion);
+    return;
+  }
+
   printWelcome();
 
-  const args = parseBlueArgs(process.argv.slice(2));
+  const presetSkills = resolvePresetSkills(cli.skill);
+  if (presetSkills.kind === "error") {
+    console.error(presetSkills.message);
+    process.exitCode = 1;
+    return;
+  }
+
+  const presetAgents = resolvePresetAgents(cli.agent);
+  if (presetAgents.kind === "error") {
+    console.error(presetAgents.message);
+    process.exitCode = 1;
+    return;
+  }
 
   let base: string;
   try {
-    base = await promptServerBase(args.ip);
+    base = await promptServerBase(cli.ip);
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);
     process.exitCode = 1;
@@ -325,31 +415,47 @@ async function main(): Promise<void> {
   }
 
   let selectedNames: string[];
-  try {
-    selectedNames = await promptSkillSelection(skills);
-  } catch (e) {
-    console.error(e instanceof Error ? e.message : e);
-    process.exitCode = 1;
-    return;
-  }
+  if (presetSkills.kind === "preset") {
+    const remote = new Set(skills.map((s) => s.name));
+    for (const name of presetSkills.names) {
+      if (!remote.has(name)) {
+        console.error(`服务器未提供技能：${name}`);
+        process.exitCode = 1;
+        return;
+      }
+    }
+    selectedNames = presetSkills.names;
+  } else {
+    try {
+      selectedNames = await promptSkillSelection(skills);
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : e);
+      process.exitCode = 1;
+      return;
+    }
 
-  if (selectedNames.length === 0) {
-    console.log("未选择技能，已退出。");
-    return;
+    if (selectedNames.length === 0) {
+      console.log("未选择技能，已退出。");
+      return;
+    }
   }
 
   let agents: AgentId[];
-  try {
-    agents = await promptAgentSelection();
-  } catch (e) {
-    console.error(e instanceof Error ? e.message : e);
-    process.exitCode = 1;
-    return;
-  }
+  if (presetAgents.kind === "preset") {
+    agents = presetAgents.agents;
+  } else {
+    try {
+      agents = await promptAgentSelection();
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : e);
+      process.exitCode = 1;
+      return;
+    }
 
-  if (agents.length === 0) {
-    console.log("未选择 Agent，已退出。");
-    return;
+    if (agents.length === 0) {
+      console.log("未选择 Agent，已退出。");
+      return;
+    }
   }
 
   let scope: InstallScope;
@@ -384,7 +490,7 @@ async function main(): Promise<void> {
     if (scope === InstallScopeId.Custom) {
       let customRoot: string;
       try {
-        customRoot = await promptCustomRoot(args.path);
+        customRoot = await promptCustomRoot(cli.path);
       } catch (e) {
         console.error(e instanceof Error ? e.message : e);
         process.exitCode = 1;

@@ -18,6 +18,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
+    "@coco-share/coco-cli": "workspace:*",
     "@koa/bodyparser": "^6.1.0",
     "archiver": "^7.0.1",
     "koa": "^2.16.4",

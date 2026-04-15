@@ -1,0 +1,26 @@
+{
+  "name": "@coco-share/coco-cli",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Internal CLI argument parser for coco-green / coco-blue.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

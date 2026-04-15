@@ -18,6 +18,7 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
+    "@coco-share/coco-cli": "workspace:*",
     "fflate": "^0.8.2",
     "prompts": "^2.4.2"
   },
