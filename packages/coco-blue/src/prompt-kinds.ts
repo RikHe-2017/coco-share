@@ -32,6 +32,7 @@ export function isInstallScope(value: string): value is InstallScope {
 export const ConflictActionId = {
   Skip: "skip",
   Abort: "abort",
+  Overwrite: "overwrite",
   Rename: "rename",
 } as const;
 
@@ -40,13 +41,15 @@ export type ConflictAction = (typeof ConflictActionId)[keyof typeof ConflictActi
 const CONFLICT_ACTION_ORDER = [
   ConflictActionId.Skip,
   ConflictActionId.Abort,
+  ConflictActionId.Overwrite,
   ConflictActionId.Rename,
 ] as const satisfies readonly ConflictAction[];
 
 const CONFLICT_ACTION_TITLE: Record<ConflictAction, string> = {
   skip: "跳过该目标",
   abort: "中止整个安装",
-  rename: "改用其他文件夹名",
+  overwrite: "覆盖安装（删除旧目录后写入）",
+  rename: "将技能文件夹名称改为新的名称保存",
 };
 
 export const CONFLICT_ACTION_PROMPT_CHOICES = CONFLICT_ACTION_ORDER.map((value) => ({

@@ -277,12 +277,12 @@ async function promptCustomRoot(cliPath?: string): Promise<string> {
 async function resolveConflict(
   dest: string,
 ): Promise<
-  typeof ConflictActionId.Skip | typeof ConflictActionId.Abort | { kind: "copy"; dest: string }
+  typeof ConflictActionId.Skip | typeof ConflictActionId.Abort | typeof ConflictActionId.Overwrite | { kind: "copy"; dest: string }
 > {
   const res = await prompts({
     type: "select",
     name: "action",
-    message: `目标已存在（同名文件夹）。请选择处理方式，勿直接覆盖。\n${dest}`,
+    message: `目标已存在（同名文件夹）。请选择处理方式。\n${dest}`,
     choices: CONFLICT_ACTION_PROMPT_CHOICES,
     initial: 0,
   });
@@ -293,6 +293,9 @@ async function resolveConflict(
   }
   if (action === ConflictActionId.Skip) {
     return ConflictActionId.Skip;
+  }
+  if (action === ConflictActionId.Overwrite) {
+    return ConflictActionId.Overwrite;
   }
 
   const nameRes = await prompts({
@@ -337,7 +340,11 @@ async function copySkillTree(
     if (decision === ConflictActionId.Skip) {
       return "ok";
     }
-    target = decision.dest;
+    if (decision === ConflictActionId.Overwrite) {
+      await fs.rm(target, { recursive: true, force: true });
+    } else {
+      target = decision.dest;
+    }
   }
 
   await fs.mkdir(path.dirname(target), { recursive: true });
@@ -459,12 +466,16 @@ async function main(): Promise<void> {
   }
 
   let scope: InstallScope;
-  try {
-    scope = await promptInstallScope();
-  } catch (e) {
-    console.error(e instanceof Error ? e.message : e);
-    process.exitCode = 1;
-    return;
+  if (cli.path !== undefined && cli.path.trim() !== "") {
+    scope = InstallScopeId.Custom;
+  } else {
+    try {
+      scope = await promptInstallScope();
+    } catch (e) {
+      console.error(e instanceof Error ? e.message : e);
+      process.exitCode = 1;
+      return;
+    }
   }
 
   if (scope === InstallScopeId.Custom && agents.length > 0) {
