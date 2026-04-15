@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build": "pnpm -r run build",
-    "clean": "pnpm -r exec rm -rf dist",
+    "clean": "pnpm -r exec rm -rf dist tsconfig.tsbuildinfo",
     "publish:green": "pnpm --filter @coco-share/coco-green publish --access public --no-git-checks",
     "publish:blue": "pnpm --filter @coco-share/coco-blue publish --access public --no-git-checks",
     "publish:all": "pnpm run build && pnpm publish:green && pnpm publish:blue"

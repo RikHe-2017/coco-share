@@ -1,7 +1,7 @@
 {
   "name": "@coco-share/coco-green",
   "author": "Rik He",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Share local Agent Skills over HTTP (coco-green server).",
   "type": "module",
   "engines": {
