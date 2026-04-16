@@ -31,7 +31,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && pnpm run build:post",
+    "build:post": "shx cp ../../README.md README.md",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {

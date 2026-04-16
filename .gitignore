@@ -4,3 +4,5 @@ dist/
 .pnpm-store/
 skill-share.md
 .claude/
+packages/coco-blue/README.md
+packages/coco-green/README.md
