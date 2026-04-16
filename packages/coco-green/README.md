@@ -66,6 +66,12 @@ npx @coco-share/coco-green --mode active
 
 主动模式会直接生成一条完整的 `npx` 命令，你只需要把那行命令复制给同事，同事粘贴执行，全程无需对话。适合那种「我说地址你记不住」的同事。
 
+如果你已经知道要分享哪个 Skill，也可以直接指定，跳过主动模式下的选择：
+
+```bash
+npx @coco-share/coco-green --skill my-skill
+```
+
 ### 接收方（coco-blue）
 
 ```bash
@@ -114,7 +120,8 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 
 ```
 --port, -p     监听端口（默认 3001）
---dir, -d      Skills 根目录（默认当前目录）
+--path         Skills 根目录（默认当前目录）
+--skill, -s    指定要分享的技能名（可多次使用；提供后默认按 active 模式分享）
 --mode, -m     passive（默认）或 active
 --help         帮助
 --version      版本

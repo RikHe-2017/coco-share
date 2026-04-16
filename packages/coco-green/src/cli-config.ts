@@ -3,6 +3,7 @@ import {
   enumOption,
   flagOption,
   numberOption,
+  stringListOption,
   stringOption,
 } from "@coco-share/coco-cli";
 
@@ -32,6 +33,13 @@ export const GREEN_CLI_DEFS = [
       "要分享的Skills 根目录（绝对路径）。提供该参数后将不再交互询问。",
     optional: true,
     valueLabel: "目录",
+  }),
+  stringListOption("skill", {
+    aliases: ["skill"],
+    short: "s",
+    description:
+      "要分享的技能名（可重复传入）。提供至少一个后将跳过主动模式下的技能选择，并默认按主动模式分享。",
+    valueLabel: "技能名",
   }),
   enumOption("mode", {
     aliases: ["mode"],

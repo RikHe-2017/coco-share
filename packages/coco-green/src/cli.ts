@@ -60,6 +60,65 @@ function asStringList(value: unknown): string[] {
   return out;
 }
 
+function readCliStringList(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const out: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") {
+      return [];
+    }
+    out.push(item);
+  }
+  return out;
+}
+
+interface NormalizeCliStringListResult {
+  readonly values: string[];
+  readonly hadBlankToken: boolean;
+}
+
+function normalizeCliStringList(
+  raw: readonly string[],
+): NormalizeCliStringListResult {
+  const values: string[] = [];
+  const seen = new Set<string>();
+  let hadBlankToken = false;
+
+  for (const item of raw) {
+    const t = item.trim();
+    if (t === "") {
+      hadBlankToken = true;
+      continue;
+    }
+    if (seen.has(t)) continue;
+    seen.add(t);
+    values.push(t);
+  }
+
+  return { values, hadBlankToken };
+}
+
+type PresetSkills =
+  | { readonly kind: "interactive" }
+  | { readonly kind: "preset"; readonly names: string[] }
+  | { readonly kind: "error"; readonly message: string };
+
+function resolvePresetSkills(raw: readonly string[]): PresetSkills {
+  if (raw.length === 0) {
+    return { kind: "interactive" };
+  }
+
+  const n = normalizeCliStringList(raw);
+  if (n.hadBlankToken || n.values.length === 0) {
+    return { kind: "error", message: "--skill 的值不能为空。" };
+  }
+
+  return { kind: "preset", names: n.values };
+}
+
 async function promptActiveSkillNames(skills: SkillRecord[]): Promise<string[]> {
   const res = await prompts({
     type: "multiselect",
@@ -122,6 +181,7 @@ async function main(): Promise<void> {
         usage: "coco-green [选项]",
         notes: [
           "主动模式启动后，会在控制台输出一条给接收方执行的 coco-blue 命令；推荐在 PowerShell / Windows Terminal 中复制执行（亦常见于 Git Bash 等环境）。",
+          "提供 --skill 后将跳过主动模式下的技能选择；若未显式指定 --mode，则默认按主动模式分享这些技能。",
         ],
       }),
     );
@@ -135,19 +195,36 @@ async function main(): Promise<void> {
 
   printWelcome();
 
+  const presetSkills = resolvePresetSkills(readCliStringList(cli.skill));
+  if (presetSkills.kind === "error") {
+    console.error(presetSkills.message);
+    process.exitCode = 1;
+    return;
+  }
+
   let mode: "active" | "passive";
   if (cli.mode === undefined) {
-    try {
-      mode = await promptShareMode();
-    } catch (e) {
-      console.error(e instanceof Error ? e.message : e);
-      process.exitCode = 1;
-      return;
+    if (presetSkills.kind === "preset") {
+      mode = "active";
+    } else {
+      try {
+        mode = await promptShareMode();
+      } catch (e) {
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+        return;
+      }
     }
   } else if (cli.mode === "active" || cli.mode === "passive") {
     mode = cli.mode;
   } else {
     console.error(`内部错误：非法 mode：${cli.mode}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (mode === "passive" && presetSkills.kind === "preset") {
+    console.error("--skill 仅可用于主动模式；请移除 --mode passive，或改用 --mode active。");
     process.exitCode = 1;
     return;
   }
@@ -190,12 +267,24 @@ async function main(): Promise<void> {
     }
 
     let pickedNames: string[];
-    try {
-      pickedNames = await promptActiveSkillNames(skills);
-    } catch (e) {
-      console.error(e instanceof Error ? e.message : e);
-      process.exitCode = 1;
-      return;
+    if (presetSkills.kind === "preset") {
+      const scanned = new Set(skills.map((s) => s.name));
+      for (const name of presetSkills.names) {
+        if (!scanned.has(name)) {
+          console.error(`未找到要分享的技能：${name}`);
+          process.exitCode = 1;
+          return;
+        }
+      }
+      pickedNames = presetSkills.names;
+    } else {
+      try {
+        pickedNames = await promptActiveSkillNames(skills);
+      } catch (e) {
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+        return;
+      }
     }
 
     if (pickedNames.length === 0) {
@@ -212,22 +301,20 @@ async function main(): Promise<void> {
   const server = app.listen(cli.port, host, () => {
     const ip = getLocalIP();
     console.log(`coco-green 已启动，监听 http://${host}:${String(cli.port)}`);
-    console.log(`请让对方使用：http://${ip}:${String(cli.port)}`);
 
-    if (mode === "active") {
-      const hostPort = `${ip}:${String(cli.port)}`;
-      const cmd = formatBlueInviteCliCommand({
-        hostPort,
-        skillNames: served.map((s) => s.name),
-      });
-      console.log("");
-      console.log(
-        "接收方可直接在 PowerShell / Windows Terminal 中复制执行（推荐）；其他终端通常也兼容：",
-      );
-      console.log("");
-      console.log(cmd);
-      console.log("");
-    }
+    const hostPort = `${ip}:${String(cli.port)}`;
+    const cmd = formatBlueInviteCliCommand(
+      mode === "active"
+        ? { hostPort, skillNames: served.map((s) => s.name) }
+        : { hostPort },
+    );
+    console.log("");
+    console.log(
+      "接收方可直接在 PowerShell / Terminal 中复制执行（推荐）；其他终端通常也兼容：",
+    );
+    console.log("");
+    console.log(cmd);
+    console.log("");
   });
 
   const shutdown = (): void => {

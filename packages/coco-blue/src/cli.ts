@@ -30,10 +30,18 @@ import {
   type InstallScope,
   isInstallScope,
 } from "./prompt-kinds.js";
+import { withSpinner } from "./spinner.js";
 
 interface RemoteSkill {
   name: string;
   description: string;
+}
+
+function hasHttpProxyConfigured(): boolean {
+  return (
+    (process.env["HTTP_PROXY"] ?? process.env["http_proxy"] ?? "") !== "" ||
+    (process.env["HTTPS_PROXY"] ?? process.env["https_proxy"] ?? "") !== ""
+  );
 }
 
 function asStringList(value: unknown): string[] {
@@ -121,11 +129,13 @@ function resolvePresetAgents(raw: readonly string[]): PresetAgents {
   return { kind: "preset", agents };
 }
 
-function printWelcome(): void {
+function printWelcome(hasIpArg: boolean): void {
   console.log(
     "coco-blue — 从 coco-green 服务器下载并在本地安装 Agent Skills。",
   );
-  console.log("请填写 coco-green 启动后显示的 http://IP:PORT 地址。\n");
+  if (!hasIpArg) {
+    console.log("请填写 coco-green 启动后显示的 http://IP:PORT 地址。\n");
+  }
 }
 
 async function promptServerBase(cliIp?: string): Promise<string> {
@@ -371,6 +381,7 @@ async function main(): Promise<void> {
         usage: "coco-blue [选项]",
         notes: [
           "若你收到来自 coco-green 主动模式生成的命令，推荐在 PowerShell / Windows Terminal 中粘贴执行。",
+          "若当前 shell 配置了 HTTP_PROXY / HTTPS_PROXY，访问局域网 coco-green 时可能无法下载技能。",
         ],
       }),
     );
@@ -382,7 +393,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  printWelcome();
+  printWelcome(cli.ip !== undefined && cli.ip.trim() !== "");
+
+  if (hasHttpProxyConfigured()) {
+    console.warn(
+      "检测到当前 shell 配置了 HTTP 代理（HTTP_PROXY / HTTPS_PROXY），访问局域网 coco-green 时可能无法下载技能。\n",
+    );
+  }
 
   const presetSkills = resolvePresetSkills(cli.skill);
   if (presetSkills.kind === "error") {
@@ -409,7 +426,11 @@ async function main(): Promise<void> {
 
   let skills: RemoteSkill[];
   try {
-    skills = await fetchSkillList(base);
+    skills = await withSpinner(
+      "正在获取技能列表...",
+      async () => await fetchSkillList(base),
+      "已获取技能列表。",
+    );
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);
     process.exitCode = 1;
@@ -486,7 +507,11 @@ async function main(): Promise<void> {
 
   let zip: Buffer;
   try {
-    zip = await downloadZip(base, selectedNames);
+    zip = await withSpinner(
+      "正在下载技能包...",
+      async () => await downloadZip(base, selectedNames),
+      "已下载技能包。",
+    );
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);
     process.exitCode = 1;
@@ -496,10 +521,8 @@ async function main(): Promise<void> {
   const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "coco-blue-"));
 
   try {
-    await extractZipBufferToDir(zip, tmpRoot);
-
+    let customRoot: string | undefined;
     if (scope === InstallScopeId.Custom) {
-      let customRoot: string;
       try {
         customRoot = await promptCustomRoot(cli.path);
       } catch (e) {
@@ -514,53 +537,78 @@ async function main(): Promise<void> {
         process.exitCode = 1;
         return;
       }
+    }
 
-      for (const agent of agents) {
-        const rootDir = agentSkillRoot(agent, customRoot);
-        await fs.mkdir(rootDir, { recursive: true });
+    await withSpinner(
+      "正在解压并安装技能...",
+      async (spinner) => {
+        spinner.setText("正在解压技能包...");
+        await extractZipBufferToDir(zip, tmpRoot);
 
-        for (const name of selectedNames) {
-          const src = path.join(tmpRoot, name);
-          if (!(await pathExists(src))) {
-            console.warn(`压缩包中缺失：${name}`);
-            continue;
+        if (scope === InstallScopeId.Custom) {
+          if (customRoot === undefined) {
+            throw new Error("内部错误：customRoot 未设置。");
           }
-          const dest = path.join(rootDir, name);
-          const r = await copySkillTree(src, dest);
-          if (r === ConflictActionId.Abort) {
-            console.error("已中止。");
-            process.exitCode = 1;
-            return;
+
+          spinner.setText("正在安装技能到自定义目录...");
+          for (const agent of agents) {
+            const rootDir = agentSkillRoot(agent, customRoot);
+            await fs.mkdir(rootDir, { recursive: true });
+
+            for (const name of selectedNames) {
+              const src = path.join(tmpRoot, name);
+              if (!(await pathExists(src))) {
+                console.warn(`压缩包中缺失：${name}`);
+                continue;
+              }
+              const dest = path.join(rootDir, name);
+              const r = await copySkillTree(src, dest);
+              if (r === ConflictActionId.Abort) {
+                throw new Error("已中止。");
+              }
+            }
           }
+          return;
         }
 
-        console.log(`${agent}: ${rootDir}`);
+        spinner.setText("正在安装技能到全局目录...");
+        for (const agent of agents) {
+          const rootDir = globalAgentSkillRoot(agent);
+          await fs.mkdir(rootDir, { recursive: true });
+
+          for (const name of selectedNames) {
+            const src = path.join(tmpRoot, name);
+            if (!(await pathExists(src))) {
+              console.warn(`压缩包中缺失：${name}`);
+              continue;
+            }
+            const dest = path.join(rootDir, name);
+            const r = await copySkillTree(src, dest);
+            if (r === ConflictActionId.Abort) {
+              throw new Error("已中止。");
+            }
+          }
+        }
+      },
+      "已完成安装。",
+    );
+
+    if (scope === InstallScopeId.Custom) {
+      if (customRoot === undefined) {
+        console.error("内部错误：customRoot 未设置。");
+        process.exitCode = 1;
+        return;
       }
 
+      for (const agent of agents) {
+        console.log(`${agent}: ${agentSkillRoot(agent, customRoot)}`);
+      }
       console.log(`安装根目录：${customRoot}`);
       return;
     }
 
     for (const agent of agents) {
-      const rootDir = globalAgentSkillRoot(agent);
-      await fs.mkdir(rootDir, { recursive: true });
-
-      for (const name of selectedNames) {
-        const src = path.join(tmpRoot, name);
-        if (!(await pathExists(src))) {
-          console.warn(`压缩包中缺失：${name}`);
-          continue;
-        }
-        const dest = path.join(rootDir, name);
-        const r = await copySkillTree(src, dest);
-        if (r === ConflictActionId.Abort) {
-          console.error("已中止。");
-          process.exitCode = 1;
-          return;
-        }
-      }
-
-      console.log(`${agent}: ${rootDir}`);
+      console.log(`${agent}: ${globalAgentSkillRoot(agent)}`);
     }
 
     console.log("完成。");
