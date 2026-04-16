@@ -1,10 +1,19 @@
 {
   "name": "@coco-share/coco-green",
   "author": "Rik He",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Share local Agent Skills over HTTP (coco-green server).",
   "license": "MIT",
-  "keywords": ["agent", "skills", "claude-code", "cursor", "codex", "share", "cli", "server"],
+  "keywords": [
+    "agent",
+    "skills",
+    "claude-code",
+    "cursor",
+    "codex",
+    "share",
+    "cli",
+    "server"
+  ],
   "homepage": "https://github.com/RikHe-2017/coco-share#readme",
   "repository": {
     "type": "git",

@@ -1,10 +1,19 @@
 {
   "name": "@coco-share/coco-blue",
   "author": "Rik He",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Install Agent Skills from coco-green (coco-blue client).",
   "license": "MIT",
-  "keywords": ["agent", "skills", "claude-code", "cursor", "codex", "install", "cli", "client"],
+  "keywords": [
+    "agent",
+    "skills",
+    "claude-code",
+    "cursor",
+    "codex",
+    "install",
+    "cli",
+    "client"
+  ],
   "homepage": "https://github.com/RikHe-2017/coco-share#readme",
   "repository": {
     "type": "git",

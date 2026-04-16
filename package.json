@@ -10,11 +10,12 @@
     "lint:fix": "eslint . --fix",
     "build": "pnpm -r run build",
     "clean": "pnpm -r exec rm -rf dist tsconfig.tsbuildinfo",
-    "publish:green": "pnpm --filter @coco-share/coco-green publish --access public --no-git-checks",
-    "publish:blue": "pnpm --filter @coco-share/coco-blue publish --access public --no-git-checks",
-    "publish:all": "pnpm run build && pnpm publish:green && pnpm publish:blue"
+    "changeset": "changeset",
+    "bump": "changeset version",
+    "release": "pnpm run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@eslint/js": "^9.21.0",
     "@types/node": "^22.13.5",
     "eslint": "^9.21.0",
