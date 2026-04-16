@@ -1,7 +1,7 @@
 {
   "name": "@coco-share/coco-blue",
   "author": "Rik He",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Install Agent Skills from coco-green (coco-blue client).",
   "license": "MIT",
   "keywords": [
@@ -31,16 +31,16 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && pnpm run build:post",
+    "build": "tsc -p tsconfig.json --noEmit && tsup src/cli.ts --format esm --platform node --target node20 --out-dir dist --clean --sourcemap && pnpm run build:post",
     "build:post": "shx cp ../../README.md README.md",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@coco-share/coco-cli": "workspace:*",
     "fflate": "^0.8.2",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "@coco-share/coco-cli": "workspace:*",
     "@types/prompts": "^2.4.9",
     "typescript": "^5.7.3"
   }

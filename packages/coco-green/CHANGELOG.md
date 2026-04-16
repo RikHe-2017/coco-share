@@ -1,5 +1,11 @@
 # @coco-share/coco-green
 
+## 1.1.1
+
+### Patch Changes
+
+- Bundle the internal coco-cli helper into published output so npm installs no longer require @coco-share/coco-cli.
+
 ## 1.1.0
 
 ### Minor Changes

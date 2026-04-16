@@ -1,7 +1,7 @@
 {
   "name": "@coco-share/coco-green",
   "author": "Rik He",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Share local Agent Skills over HTTP (coco-green server).",
   "license": "MIT",
   "keywords": [
@@ -31,18 +31,18 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && pnpm run build:post",
+    "build": "tsc -p tsconfig.json --noEmit && tsup src/cli.ts --format esm --platform node --target node20 --out-dir dist --clean --sourcemap && pnpm run build:post",
     "build:post": "shx cp ../../README.md README.md",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@coco-share/coco-cli": "workspace:*",
     "@koa/bodyparser": "^6.1.0",
     "archiver": "^7.0.1",
     "koa": "^2.16.4",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "@coco-share/coco-cli": "workspace:*",
     "@types/archiver": "^7.0.0",
     "@types/koa": "^2.15.0",
     "@types/prompts": "^2.4.9",
