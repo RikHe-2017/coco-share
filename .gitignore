@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.tsbuildinfo
 .pnpm-store/
+skill-share.md
+.claude/
