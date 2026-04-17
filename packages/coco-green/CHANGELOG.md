@@ -1,5 +1,11 @@
 # @coco-share/coco-green
 
+## 1.1.2
+
+### Patch Changes
+
+- Refresh the published package README content.
+
 ## 1.1.1
 
 ### Patch Changes

@@ -39,7 +39,11 @@
 
 ### 分享方（coco-green）
 什么这参数那配置的，我管你这那的，我直接把下面的提示词改改发给我的大模型再说。
-"使用 @coco-share/coco-green 把我的 skillxxx(此处替换成你的skill名称)分享出去。不知道coco-green 如何使用？使用coco-green -h查看帮助"
+
+```bash
+"使用 @coco-share/coco-green 把我的 skillxxx(此处替换成你的skill名称)分享出去。你直接在命令行执行, 执行完成后不要停止该服务，把分享命令展示出来，等待用户通知关闭服务时在关闭服务。不知道coco-green 如何使用可以使用coco-green -h查看帮助。"
+```
+
 大模型最后会输出一行命令，吧这个命令复制一下，发给接收方完事。
 
 ### 接受方（coco-blue）
