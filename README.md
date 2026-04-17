@@ -1,8 +1,19 @@
-# coco-share
+> 同事费尽心机调教了个好skill? 不行，我得想办法弄到手里“把玩把玩“。
 
-> 你精心调教的 Agent Skills，凭什么只能烂在自己的硬盘里？
+> 自己捯饬了个skill, 又不好意思传到公网？
 
+> 公司内网skill hub 上传，又要扫描又要审核啥的，又这又那的，好不麻烦～
+
+> 同事的好skill自己又添了两笔，想再回馈同事～ 
+
+> 微信、IM传来传去，还传不到头绪～
+
+> 想把自己的skill传到公网或内网，但是谨慎的性格决定先在周边同事之间验证下是否有价值～ 
 ---
+
+![coco-share logo](https://raw.githubusercontent.com/RikHe-2017/coco-share/main/logo.svg)
+
+# coco-share (可乐分着喝更爽-可乐分享)
 
 ## 这是什么？
 
@@ -23,12 +34,12 @@
 
 场景还原：
 
-> 你：「我写了个超好用的 Skill，你要不要？」
-> 同事：「要啊，发我一下。」
-> 你：「……」（开始思考怎么发）
+> 同事：「我写了个超好用的 Skill，你要不要？」
+> 你：「要啊，发我一下。」
+> 同事：「……」（开始思考怎么发）
 
 你可以把文件夹压缩发微信，但微信会把 `.md` 文件压成乱码。
-你可以传到云盘，但公司网络访问云盘需要 VPN，VPN 又要申请权限。
+你可以传到公司内网hub，但公司又要审核，又要扫描。
 你可以推到 GitHub，但那个 Skill 里有三行公司内网地址。
 
 **coco-share 的答案是：别折腾了，直接在局域网传。**
@@ -40,9 +51,7 @@
 ### 分享方（coco-green）
 什么这参数那配置的，我管你这那的，我直接把下面的提示词改改发给我的大模型再说。
 
-```bash
-"使用 @coco-share/coco-green 把我的 skillxxx(此处替换成你的skill名称)分享出去。你直接在命令行执行, 执行完成后不要停止该服务，把分享命令展示出来，等待用户通知关闭服务时在关闭服务。不知道coco-green 如何使用可以使用coco-green -h查看帮助。"
-```
+> "使用 @coco-share/coco-green 把我的 skillxxx(此处替换成你的skill名称)分享出去。你直接在命令行执行, 执行完成后不要停止该服务，把分享命令展示出来，等待用户通知关闭服务时在关闭服务。不知道coco-green 如何使用可以使用coco-green -h查看帮助。"
 
 大模型最后会输出一行命令，吧这个命令复制一下，发给接收方完事。
 
@@ -58,23 +67,34 @@
 npx @coco-share/coco-green
 ```
 
-启动后会显示你的局域网地址，比如 `http://192.168.1.5:3001`。
+启动后会直接输出接收端命令，比如：`npx @coco-share/coco-blue --ip="192.168.xxx.xx:3001"`
+
 
 把这个地址告诉同事，完事。
 
-**懒人模式（主动模式）：**
+**主动模式：**
 
 ```bash
 npx @coco-share/coco-green --mode active
 ```
+主动模式是由 **分享方（coco-green）** 来决定分享自己的哪些skill给别人。
 
-主动模式会直接生成一条完整的 `npx` 命令，你只需要把那行命令复制给同事，同事粘贴执行，全程无需对话。适合那种「我说地址你记不住」的同事。
+主动模式会直接生成一条完整的 `npx` 命令，你只需要把那行命令复制给同事，同事粘贴执行，全程无需对话。适合那种「伸手党」的同事。
 
 如果你已经知道要分享哪个 Skill，也可以直接指定，跳过主动模式下的选择：
 
 ```bash
 npx @coco-share/coco-green --skill my-skill
 ```
+coco-green 的设计思路是: `我要的参数我没有，我就询问用户。用户只要是给了我参数，我就什么都不问。主打的就是一个听命行事。`
+至于有哪些参数，请在命令行随时输入： 
+```bash
+  npx @coco-share/coco-green -h
+```
+或点击 [Cli 参数速查](#CLI参数速查)。
+
+另外，coco-blue: `俺也一样`
+
 
 ### 接收方（coco-blue）
 
@@ -118,6 +138,8 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 
 ---
 
+
+<a id="CLI参数速查"></a>
 ## CLI 参数速查
 
 ### coco-green
@@ -169,3 +191,12 @@ coco-share/
 ## License
 
 MIT — 随便用，出了事别找我。
+
+## 求个star
+各位大佬，有用得上的给个star吧，球球了。
+
+[coco-share github](https://github.com/RikHe-2017/coco-share)
+
+[@coco-share/coco-green npm](https://www.npmjs.com/package/@coco-share/coco-green)
+
+[@coco-share/coco-blue npm](https://www.npmjs.com/package/@coco-share/coco-blue)

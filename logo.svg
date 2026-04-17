@@ -1,0 +1,70 @@
+<svg width="720" height="220" viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="720" height="220" rx="28" fill="#FFF8EE"/>
+
+  <g transform="translate(40 28) rotate(-12 70 80)">
+    <ellipse cx="70" cy="20" rx="34" ry="8" fill="#D6D6D6"/>
+    <rect x="36" y="20" width="68" height="120" rx="18" fill="#16A34A"/>
+    <ellipse cx="70" cy="140" rx="34" ry="8" fill="#C8C8C8"/>
+    <path
+      d="M66 40C54 48 54 60 64 68C75 77 76 89 64 98C55 105 55 116 64 124"
+      stroke="#E8FFD9"
+      stroke-width="8"
+      stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(108 28) rotate(12 70 80)">
+    <ellipse cx="70" cy="20" rx="34" ry="8" fill="#D6D6D6"/>
+    <rect x="36" y="20" width="68" height="120" rx="18" fill="#2563EB"/>
+    <ellipse cx="70" cy="140" rx="34" ry="8" fill="#C8C8C8"/>
+    <path
+      d="M66 40C54 48 54 60 64 68C75 77 76 89 64 98C55 105 55 116 64 124"
+      stroke="#EAF2FF"
+      stroke-width="8"
+      stroke-linecap="round"/>
+  </g>
+
+  <path
+    d="M148 62L158 52M156 72L168 64M142 76L150 88"
+    stroke="#FFC857"
+    stroke-width="6"
+    stroke-linecap="round"/>
+
+  <text
+    x="250"
+    y="96"
+    font-size="48"
+    font-weight="900"
+    fill="#1E293B"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">COCO-SHARE</text>
+
+  <path
+    d="M258 148C316 140 370 156 430 148C490 140 542 122 602 132C648 140 682 144 712 136"
+    stroke="#FFA10A"
+    stroke-width="8"
+    stroke-linecap="round"
+    fill="none"/>
+
+  <g opacity="0.95">
+    <circle cx="610" cy="118" r="5" fill="#FFD166"/>
+    <circle cx="628" cy="110" r="3.5" fill="#FFD166"/>
+    <circle cx="646" cy="120" r="4" fill="#FFD166"/>
+    <circle cx="666" cy="112" r="2.5" fill="#FFD166"/>
+    <circle cx="686" cy="122" r="3" fill="#FFD166"/>
+  </g>
+
+  <text
+    x="250"
+    y="136"
+    font-size="22"
+    font-weight="800"
+    fill="#16A34A"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">可乐分着喝更爽</text>
+
+  <text
+    x="468"
+    y="136"
+    font-size="22"
+    font-weight="800"
+    fill="#2563EB"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">可乐分享</text>
+</svg>

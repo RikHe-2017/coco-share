@@ -1,5 +1,11 @@
 # @coco-share/coco-blue
 
+## 1.1.3
+
+### Patch Changes
+
+- Refresh the published package README and include the logo asset in npm packages.
+
 ## 1.1.2
 
 ### Patch Changes
