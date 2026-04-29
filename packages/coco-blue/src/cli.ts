@@ -501,7 +501,7 @@ async function main(): Promise<void> {
 
   if (scope === InstallScopeId.Custom && agents.length > 0) {
     console.log(
-      "自定义根目录：将在所选目录下为每个已选 Agent 创建与全局一致的子路径（如 .cursor/skills-cursor等）。\n",
+      "自定义根目录：将在所选目录下为每个已选 Agent 创建与全局一致的子路径（如 .cursor/skills 等）。\n",
     );
   }
 

@@ -133,7 +133,7 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 
 ### 安装位置
 
-- **全局**：装到各 Agent 的默认全局路径（`~/.claude/skills`、`~/.cursor/skills-cursor`、`~/.codex/skills`）
+- **全局**：装到各 Agent 的默认全局路径（`~/.claude/skills`、`~/.cursor/skills`、`~/.codex/skills`）
 - **自定义根目录**：装到你指定的目录下，子路径结构与全局一致
 
 ---
@@ -171,7 +171,7 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 | Agent | 全局路径 |
 |---|---|
 | Claude Code | `~/.claude/skills/<skill-name>/` |
-| Cursor | `~/.cursor/skills-cursor/<skill-name>/` |
+| Cursor | `~/.cursor/skills/<skill-name>/` |
 | Codex | `~/.codex/skills/<skill-name>/` |
 
 ---

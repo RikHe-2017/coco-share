@@ -19,7 +19,7 @@ export function isAgentId(value: string): value is AgentId {
 export function agentSkillRoot(agent: AgentId, baseDir: string): string {
   switch (agent) {
     case "cursor": {
-      return path.join(baseDir, ".cursor", "skills-cursor");
+      return path.join(baseDir, ".cursor", "skills");
     }
     case "claudeCode": {
       return path.join(baseDir, ".claude", "skills");
