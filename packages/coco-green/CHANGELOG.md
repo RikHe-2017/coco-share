@@ -1,5 +1,11 @@
 # @coco-share/coco-green
 
+## 1.1.4
+
+### Patch Changes
+
+- Fix Cursor skill installation path to use `.cursor/skills`.
+
 ## 1.1.3
 
 ### Patch Changes

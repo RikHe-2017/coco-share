@@ -1,7 +1,7 @@
 {
   "name": "@coco-share/coco-blue",
   "author": "Rik He",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Install Agent Skills from coco-green (coco-blue client).",
   "license": "MIT",
   "keywords": [
