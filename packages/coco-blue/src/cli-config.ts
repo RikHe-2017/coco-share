@@ -26,24 +26,24 @@ export const BLUE_CLI_DEFS = [
   }),
   stringOption("path", {
     aliases: ["path", "install-dir", "dir"],
-    short: "d",
+    short: "p",
     description:
-      "自定义安装根目录（绝对路径；仅在选择“自定义根目录”安装时生效）。提供后将不再交互询问。",
+      "安装路径：global 表示全局安装；其他值表示自定义安装根目录（支持相对或绝对路径）。提供后将不再交互询问。",
     optional: true,
-    valueLabel: "目录",
+    valueLabel: "路径",
   }),
   stringListOption("skill", {
     aliases: ["skill"],
     short: "s",
     description:
-      "要安装的技能名（可重复传入）。提供至少一个后将不再交互选择技能。",
+      "要安装的技能名（可重复传入或逗号分隔）。提供至少一个后将不再交互选择技能。",
     valueLabel: "技能名",
   }),
   stringListOption("agent", {
     aliases: ["agent"],
     short: "a",
     description:
-      "目标 Agent（可重复传入：cursor | claudeCode | codex）。提供至少一个后将不再交互选择。",
+      "目标 Agent（可重复传入或逗号分隔：cursor | claudeCode | codex）。提供至少一个后将不再交互选择。",
     valueLabel: "agent",
   }),
 ] as const;

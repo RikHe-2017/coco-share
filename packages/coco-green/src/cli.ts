@@ -8,12 +8,18 @@ import prompts from "prompts";
 
 import { greenCli } from "./cli-config.js";
 import { createApp } from "./create-server.js";
-import { formatBlueInviteCliCommand } from "./format-invite-command.js";
+import {
+  formatBlueInviteCliCommand,
+  type BlueInviteCliCommandOptions,
+} from "./format-invite-command.js";
 import { getLocalIP } from "./local-ip.js";
 import { readPackageVersion } from "./pkg-version.js";
 import { PROMPTS_MULTISELECT_INSTRUCTIONS } from "./prompt-locale.js";
 import type { SkillRecord } from "./scan-skills.js";
 import { scanSkills } from "./scan-skills.js";
+
+const TARGET_AGENT_IDS = ["cursor", "claudeCode", "codex"] as const;
+type TargetAgentId = (typeof TARGET_AGENT_IDS)[number];
 
 function printWelcome(): void {
   console.log("coco-green — 在局域网内通过 HTTP 共享本机的 Agent Skills。");
@@ -88,17 +94,26 @@ function normalizeCliStringList(
   let hadBlankToken = false;
 
   for (const item of raw) {
-    const t = item.trim();
-    if (t === "") {
-      hadBlankToken = true;
-      continue;
+    for (const part of item.split(",")) {
+      const t = part.trim();
+      if (t === "") {
+        hadBlankToken = true;
+        continue;
+      }
+      if (seen.has(t)) continue;
+      seen.add(t);
+      values.push(t);
     }
-    if (seen.has(t)) continue;
-    seen.add(t);
-    values.push(t);
   }
 
   return { values, hadBlankToken };
+}
+
+function isTargetAgentId(value: string): value is TargetAgentId {
+  for (const id of TARGET_AGENT_IDS) {
+    if (value === id) return true;
+  }
+  return false;
 }
 
 type PresetSkills =
@@ -119,6 +134,35 @@ function resolvePresetSkills(raw: readonly string[]): PresetSkills {
   return { kind: "preset", names: n.values };
 }
 
+type PresetAgents =
+  | { readonly kind: "interactive" }
+  | { readonly kind: "preset"; readonly agents: TargetAgentId[] }
+  | { readonly kind: "error"; readonly message: string };
+
+function resolvePresetAgents(raw: readonly string[]): PresetAgents {
+  if (raw.length === 0) {
+    return { kind: "interactive" };
+  }
+
+  const n = normalizeCliStringList(raw);
+  if (n.hadBlankToken || n.values.length === 0) {
+    return { kind: "error", message: "--agent 的值不能为空。" };
+  }
+
+  const agents: TargetAgentId[] = [];
+  for (const id of n.values) {
+    if (!isTargetAgentId(id)) {
+      return {
+        kind: "error",
+        message: `未知的 Agent：${id}（可选：${TARGET_AGENT_IDS.join(", ")}）`,
+      };
+    }
+    agents.push(id);
+  }
+
+  return { kind: "preset", agents };
+}
+
 async function promptActiveSkillNames(skills: SkillRecord[]): Promise<string[]> {
   const res = await prompts({
     type: "multiselect",
@@ -137,6 +181,93 @@ async function promptActiveSkillNames(skills: SkillRecord[]): Promise<string[]> 
   }
 
   return asStringList(res.names as unknown);
+}
+
+async function promptTargetAgents(): Promise<TargetAgentId[]> {
+  const res = await prompts({
+    type: "multiselect",
+    name: "agents",
+    message: "主动模式：选择接收方要安装到哪些 Agent",
+    choices: TARGET_AGENT_IDS.map((id) => ({
+      title: id,
+      value: id,
+    })),
+    hint: "- 空格切换选中，回车确认。",
+    instructions: PROMPTS_MULTISELECT_INSTRUCTIONS,
+  });
+
+  if (res.agents === undefined) {
+    throw new Error("已取消。");
+  }
+
+  const picked = asStringList(res.agents as unknown);
+  const agents: TargetAgentId[] = [];
+  for (const id of picked) {
+    if (!isTargetAgentId(id)) {
+      throw new Error("提示返回值不符合预期。");
+    }
+    agents.push(id);
+  }
+  return agents;
+}
+
+async function promptInstallPath(): Promise<string> {
+  const res = await prompts({
+    type: "autocomplete",
+    name: "installPath",
+    message: "主动模式：接收方安装位置（回车选择全局，或直接输入自定义路径）",
+    choices: [
+      {
+        title: "全局安装",
+        value: "global",
+      },
+    ],
+    initial: 0,
+    suggest: (input: string, choices: prompts.Choice[]) => {
+      const trimmed = input.trim();
+      if (trimmed === "") {
+        return Promise.resolve(choices);
+      }
+
+      const lower = trimmed.toLowerCase();
+      const matched = choices.filter((choice) =>
+        choice.title.toLowerCase().includes(lower) ||
+        String(choice.value ?? "").toLowerCase().includes(lower),
+      );
+      if (lower === "global") {
+        return Promise.resolve(matched);
+      }
+
+      return Promise.resolve([
+        ...matched,
+        {
+          title: `自定义路径：${trimmed}`,
+          value: trimmed,
+        },
+      ]);
+    },
+  });
+
+  const installPath = res.installPath as unknown as string | undefined;
+  if (installPath === undefined) {
+    throw new Error("已取消。");
+  }
+  const trimmed = installPath.trim();
+  if (trimmed === "") {
+    throw new Error("安装路径不能为空。");
+  }
+  return trimmed;
+}
+
+function resolveInstallPath(cliInstallPath?: string): string | undefined {
+  if (cliInstallPath === undefined) {
+    return undefined;
+  }
+  const trimmed = cliInstallPath.trim();
+  if (trimmed === "") {
+    throw new Error("--install-path 的值不能为空。");
+  }
+  return trimmed;
 }
 
 async function resolveSkillRoot(cliPath?: string): Promise<string> {
@@ -181,7 +312,7 @@ async function main(): Promise<void> {
         usage: "coco-green [选项]",
         notes: [
           "主动模式启动后，会在控制台输出一条给接收方执行的 coco-blue 命令；推荐在 PowerShell / Windows Terminal 中复制执行（亦常见于 Git Bash 等环境）。",
-          "提供 --skill 后将跳过主动模式下的技能选择；若未显式指定 --mode，则默认按主动模式分享这些技能。",
+          "提供 --skill、--agent 或 --install-path 后将跳过主动模式下对应的交互；若未显式指定 --mode，则默认按主动模式处理。",
         ],
       }),
     );
@@ -202,9 +333,29 @@ async function main(): Promise<void> {
     return;
   }
 
+  const presetAgents = resolvePresetAgents(readCliStringList(cli.agent));
+  if (presetAgents.kind === "error") {
+    console.error(presetAgents.message);
+    process.exitCode = 1;
+    return;
+  }
+
+  let presetInstallPath: string | undefined;
+  try {
+    presetInstallPath = resolveInstallPath(cli.installPath);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : e);
+    process.exitCode = 1;
+    return;
+  }
+
   let mode: "active" | "passive";
   if (cli.mode === undefined) {
-    if (presetSkills.kind === "preset") {
+    if (
+      presetSkills.kind === "preset" ||
+      presetAgents.kind === "preset" ||
+      presetInstallPath !== undefined
+    ) {
       mode = "active";
     } else {
       try {
@@ -225,6 +376,16 @@ async function main(): Promise<void> {
 
   if (mode === "passive" && presetSkills.kind === "preset") {
     console.error("--skill 仅可用于主动模式；请移除 --mode passive，或改用 --mode active。");
+    process.exitCode = 1;
+    return;
+  }
+  if (mode === "passive" && presetAgents.kind === "preset") {
+    console.error("--agent 仅可用于主动模式；请移除 --mode passive，或改用 --mode active。");
+    process.exitCode = 1;
+    return;
+  }
+  if (mode === "passive" && presetInstallPath !== undefined) {
+    console.error("--install-path 仅可用于主动模式；请移除 --mode passive，或改用 --mode active。");
     process.exitCode = 1;
     return;
   }
@@ -259,6 +420,8 @@ async function main(): Promise<void> {
   }
 
   let served: SkillRecord[] = skills;
+  let targetAgents: TargetAgentId[] | undefined;
+  let installPath: string | undefined;
   if (mode === "active") {
     if (skills.length === 0) {
       console.error("主动模式需要至少 1 个技能，但当前目录下未扫描到技能。");
@@ -294,6 +457,35 @@ async function main(): Promise<void> {
 
     const order = new Set(pickedNames);
     served = skills.filter((s) => order.has(s.name));
+
+    if (presetAgents.kind === "preset") {
+      targetAgents = presetAgents.agents;
+    } else {
+      try {
+        targetAgents = await promptTargetAgents();
+      } catch (e) {
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+        return;
+      }
+    }
+
+    if (targetAgents.length === 0) {
+      console.log("未选择目标 Agent，已退出。");
+      return;
+    }
+
+    if (presetInstallPath !== undefined) {
+      installPath = presetInstallPath;
+    } else {
+      try {
+        installPath = await promptInstallPath();
+      } catch (e) {
+        console.error(e instanceof Error ? e.message : e);
+        process.exitCode = 1;
+        return;
+      }
+    }
   }
 
   const app = createApp(served);
@@ -303,11 +495,16 @@ async function main(): Promise<void> {
     console.log(`coco-green 已启动，监听 http://${host}:${String(cli.port)}`);
 
     const hostPort = `${ip}:${String(cli.port)}`;
-    const cmd = formatBlueInviteCliCommand(
+    const cmdOpts: BlueInviteCliCommandOptions =
       mode === "active"
-        ? { hostPort, skillNames: served.map((s) => s.name) }
-        : { hostPort },
-    );
+        ? {
+            hostPort,
+            skillNames: served.map((s) => s.name),
+            ...(targetAgents !== undefined ? { agents: targetAgents } : {}),
+            ...(installPath !== undefined ? { installPath } : {}),
+          }
+        : { hostPort };
+    const cmd = formatBlueInviteCliCommand(cmdOpts);
     console.log("");
     console.log(
       "接收方可直接在 PowerShell / Terminal 中复制执行（推荐）；其他终端通常也兼容：",

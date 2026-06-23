@@ -38,8 +38,22 @@ export const GREEN_CLI_DEFS = [
     aliases: ["skill"],
     short: "s",
     description:
-      "要分享的技能名（可重复传入）。提供至少一个后将跳过主动模式下的技能选择，并默认按主动模式分享。",
+      "要分享的技能名（可重复传入或逗号分隔）。提供至少一个后将跳过主动模式下的技能选择，并默认按主动模式分享。",
     valueLabel: "技能名",
+  }),
+  stringListOption("agent", {
+    aliases: ["agent"],
+    short: "a",
+    description:
+      "主动模式下接收方目标 Agent（可重复传入或逗号分隔：cursor | claudeCode | codex）。提供至少一个后将跳过目标 Agent 选择。",
+    valueLabel: "agent",
+  }),
+  stringOption("installPath", {
+    aliases: ["install-path"],
+    description:
+      "主动模式下接收方安装路径：global 表示全局安装；其他值表示自定义安装根目录。",
+    optional: true,
+    valueLabel: "路径",
   }),
   enumOption("mode", {
     aliases: ["mode"],

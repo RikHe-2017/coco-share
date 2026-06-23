@@ -284,6 +284,19 @@ async function promptCustomRoot(cliPath?: string): Promise<string> {
   return path.isAbsolute(picked) ? picked : path.resolve(picked);
 }
 
+function resolveInstallScope(cliPath?: string): InstallScope | undefined {
+  if (cliPath === undefined) {
+    return undefined;
+  }
+  const trimmed = cliPath.trim();
+  if (trimmed === "") {
+    throw new Error("--path 的值不能为空。");
+  }
+  return trimmed === InstallScopeId.Global
+    ? InstallScopeId.Global
+    : InstallScopeId.Custom;
+}
+
 async function resolveConflict(
   dest: string,
 ): Promise<
@@ -393,6 +406,15 @@ async function main(): Promise<void> {
     return;
   }
 
+  let presetScope: InstallScope | undefined;
+  try {
+    presetScope = resolveInstallScope(cli.path);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : e);
+    process.exitCode = 1;
+    return;
+  }
+
   printWelcome(cli.ip !== undefined && cli.ip.trim() !== "");
 
   if (hasHttpProxyConfigured()) {
@@ -486,10 +508,8 @@ async function main(): Promise<void> {
     }
   }
 
-  let scope: InstallScope;
-  if (cli.path !== undefined && cli.path.trim() !== "") {
-    scope = InstallScopeId.Custom;
-  } else {
+  let scope = presetScope;
+  if (scope === undefined) {
     try {
       scope = await promptInstallScope();
     } catch (e) {
@@ -532,7 +552,9 @@ async function main(): Promise<void> {
       }
 
       const st = await fs.stat(customRoot).catch(() => undefined);
-      if (!st?.isDirectory()) {
+      if (st === undefined) {
+        await fs.mkdir(customRoot, { recursive: true });
+      } else if (!st.isDirectory()) {
         console.error(`不是目录：${customRoot}`);
         process.exitCode = 1;
         return;

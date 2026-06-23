@@ -1,11 +1,21 @@
 function quoteArg(value: string): string {
-  return `"${value.replace(/"/g, '\\"')}"`;
+  if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(value)) {
+    return value;
+  }
+  if (!value.includes("'")) {
+    return `'${value}'`;
+  }
+  return `"${value.replace(/["\\$`]/g, "\\$&")}"`;
 }
 
-export function formatBlueInviteCliCommand(opts: {
+export interface BlueInviteCliCommandOptions {
   readonly hostPort: string;
   readonly skillNames?: readonly string[];
-}): string {
+  readonly agents?: readonly string[];
+  readonly installPath?: string;
+}
+
+export function formatBlueInviteCliCommand(opts: BlueInviteCliCommandOptions): string {
   const parts: string[] = [
     "npx",
     "@coco-share/coco-blue",
@@ -15,6 +25,14 @@ export function formatBlueInviteCliCommand(opts: {
     for (const name of opts.skillNames) {
       parts.push(`--skill=${quoteArg(name)}`);
     }
+  }
+  if (opts.agents) {
+    for (const agent of opts.agents) {
+      parts.push(`--agent=${quoteArg(agent)}`);
+    }
+  }
+  if (opts.installPath !== undefined) {
+    parts.push(`-p=${quoteArg(opts.installPath)}`);
   }
   return parts.join(" ");
 }

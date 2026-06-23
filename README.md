@@ -77,14 +77,14 @@ npx @coco-share/coco-green
 ```bash
 npx @coco-share/coco-green --mode active
 ```
-主动模式是由 **分享方（coco-green）** 来决定分享自己的哪些skill给别人。
+主动模式是由 **分享方（coco-green）** 来决定分享自己的哪些 skill、让接收方装到哪些 Agent、以及安装到全局还是指定路径。
 
 主动模式会直接生成一条完整的 `npx` 命令，你只需要把那行命令复制给同事，同事粘贴执行，全程无需对话。适合那种「伸手党」的同事。
 
-如果你已经知道要分享哪个 Skill，也可以直接指定，跳过主动模式下的选择：
+如果你已经知道要分享哪个 Skill、目标 Agent 和安装路径，也可以直接指定，跳过主动模式下的选择：
 
 ```bash
-npx @coco-share/coco-green --skill my-skill
+npx @coco-share/coco-green --skill my-skill --agent codex --install-path global
 ```
 coco-green 的设计思路是: `我要的参数我没有，我就询问用户。用户只要是给了我参数，我就什么都不问。主打的就是一个听命行事。`
 至于有哪些参数，请在命令行随时输入： 
@@ -102,12 +102,12 @@ coco-green 的设计思路是: `我要的参数我没有，我就询问用户。
 npx @coco-share/coco-blue
 ```
 
-coco-green 会直接输出完整命令，执行该命令coco-blue会主动询问你，你只需要告诉coco-blue你要装在哪，给谁装就行。
+coco-green 主动模式会直接输出完整命令；如果命令里已经带了 `--skill`、`--agent`、`-p/--path`，coco-blue 会直接安装。
 
 如果你已经知道要装什么，可以全部用参数指定，跳过所有交互：
 
 ```bash
-npx @coco-share/coco-blue --ip 192.168.1.5:3001 --skill my-skill --agent claude-code
+npx @coco-share/coco-blue --ip 192.168.1.5:3001 --skill my-skill --agent claudeCode
 ```
 
 ---
@@ -135,6 +135,7 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 
 - **全局**：装到各 Agent 的默认全局路径（`~/.claude/skills`、`~/.cursor/skills`、`~/.codex/skills`）
 - **自定义根目录**：装到你指定的目录下，子路径结构与全局一致
+- **命令行指定**：`coco-blue -p global` 安装到全局；`coco-blue -p ../../test` 或 `coco-blue -p /Users/rik/test` 安装到指定根目录
 
 ---
 
@@ -147,7 +148,9 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 ```
 --port, -p     监听端口（默认 3001）
 --path         Skills 根目录（默认当前目录）
---skill, -s    指定要分享的技能名（可多次使用；提供后默认按 active 模式分享）
+--skill, -s    指定要分享的技能名（可多次使用或逗号分隔；提供后默认按 active 模式分享）
+--agent, -a    主动模式下接收方目标 Agent（cursor / claudeCode / codex，可多次使用或逗号分隔）
+--install-path 主动模式下接收方安装路径（global 或自定义根目录）
 --mode, -m     passive（默认）或 active
 --help         帮助
 --version      版本
@@ -158,8 +161,8 @@ coco-green 会自动检测你的局域网 IP，并过滤掉 Docker、VMware、Vi
 ```
 --ip           coco-green 地址（如 192.168.1.5:3001）
 --skill        指定技能名（可多次使用或逗号分隔）
---agent        指定 Agent（claude-code / cursor / codex，可多次使用）
---path         自定义安装根目录（指定后自动跳过安装位置选择）
+--agent        指定 Agent（claudeCode / cursor / codex，可多次使用或逗号分隔）
+-p, --path     安装路径：global 表示全局安装；其他值表示自定义安装根目录（支持相对或绝对路径）
 --help         帮助
 --version      版本
 ```

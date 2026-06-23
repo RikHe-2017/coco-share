@@ -12,14 +12,16 @@ export function normalizeCliStringList(
   let hadBlankToken = false;
 
   for (const item of raw) {
-    const t = item.trim();
-    if (t === "") {
-      hadBlankToken = true;
-      continue;
+    for (const part of item.split(",")) {
+      const t = part.trim();
+      if (t === "") {
+        hadBlankToken = true;
+        continue;
+      }
+      if (seen.has(t)) continue;
+      seen.add(t);
+      values.push(t);
     }
-    if (seen.has(t)) continue;
-    seen.add(t);
-    values.push(t);
   }
 
   return { values, hadBlankToken };

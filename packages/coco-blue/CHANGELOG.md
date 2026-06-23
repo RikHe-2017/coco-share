@@ -1,5 +1,12 @@
 # @coco-share/coco-blue
 
+## 1.1.5
+
+### Patch Changes
+
+- Let coco-green active mode include target Agent and install path choices in generated coco-blue commands.
+- Add `-p/--path` install path handling, including `global` for global installs and custom relative or absolute install roots.
+
 ## 1.1.4
 
 ### Patch Changes

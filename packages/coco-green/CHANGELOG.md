@@ -1,5 +1,11 @@
 # @coco-share/coco-green
 
+## 1.1.5
+
+### Patch Changes
+
+- Let coco-green active mode include target Agent and install path choices in generated coco-blue commands.
+
 ## 1.1.4
 
 ### Patch Changes
